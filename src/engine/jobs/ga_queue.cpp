@@ -7,48 +7,96 @@
 ** This file is distributed under the MIT License. See LICENSE.txt.
 */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
 #include "ga_queue.h"
 
 ga_queue::ga_queue(int node_count)
 {
-	// TODO:
-	// Initialize the queue.
-	// For extra credit, preallocate 'node_count' elements (instead of
-	// allocating on push).
-	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
+	//Initialize Queue
+
+	head = (Node*)malloc(sizeof(Node));
+	tail = (Node*)malloc(sizeof(Node));
+	//Node* node = (Node*)malloc(sizeof(Node));
+	Node* node = new Node;
+
+	node->next = NULL;
+	node->val = NULL;
+	head = node;
+	tail = node;
+
+	//headLock.unlock();
+	//tailLock.unlock();
 }
 
 ga_queue::~ga_queue()
 {
-	// TODO:
-	// Free any resources held by the queue.
-	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
+	//Free any resources held by the queue.
+	/*if (head)
+	{
+		head->~Node();
+		free(head);
+		free(tail);
+	}*/
+	Node* node = head;
+	Node* nextNode;
+	while (node->next)
+	{
+		nextNode = node->next;
+		free(node);
+		node = nextNode;
+	}
 }
 
 void ga_queue::push(void* data)
 {
-	// TODO:
-	// Push 'data' onto the queue in a thread-safe manner.
-	// If you preallocated 'node_count' elements, and if the queue is full when
-	// this function is called, you must block until another thread pops an
-	// element off the queue.
-	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
+	//Push one element with value 'data' onto the queue
+
+	//Node* node = (Node*)malloc(sizeof(Node));
+	Node* node = new Node;
+
+	node->val = data;
+	node->next = NULL;
+	
+	tailLock.lock();
+	tail->next = node;
+	tail = node;
+	tailLock.unlock();
 }
 
 bool ga_queue::pop(void** data)
 {
-	// TODO:
 	// Pop one element off the queue in a thread-safe manner and place it in
 	// the memory pointed to by 'data'.
 	// If the queue is empty when this function is called, return false.
 	// Otherwise return true.
-	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
-	return false;
+	
+	headLock.lock();
+	Node* node = head;
+	Node* newHead = head->next;
+	if (!newHead)
+	{
+		headLock.unlock();
+		return false;
+	}
+	*data = newHead->val;
+	head = newHead;
+	headLock.unlock();
+	free(node);
+	return true;
 }
 
 int ga_queue::get_count() const
 {
-	// TODO:
 	// Get the number of elements currently in the queue.
-	return 0;
+	
+	int count = 0;
+	Node* node = head;
+	while (node->next)
+	{
+		count++;
+		node = node->next;
+	}
+	return count;
 }
